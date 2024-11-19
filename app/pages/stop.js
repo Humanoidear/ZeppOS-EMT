@@ -35,7 +35,7 @@ Page({
         ;
       var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
       var d = R * c; // Distance in km
-      return d*1000;
+      return d * 1000;
     }
 
     function deg2rad(deg) {
@@ -136,8 +136,6 @@ Page({
     const latitude = geolocation.getLatitude();
     const longitude = geolocation.getLongitude() * -1;
     const stopId = data.stopId;
-    logger.log("Latitude", latitude);
-    logger.log("Longitude", longitude);
 
     messageBuilder
       .request({
@@ -149,9 +147,6 @@ Page({
         },
       })
       .then((data) => {
-        logger.log("Data", data);
-        logger.log("Data length", data.length);
-
         const viewContainer = createWidget(widget.VIEW_CONTAINER, {
           x: px(0),
           y: px(300),
@@ -160,44 +155,60 @@ Page({
         });
 
         let totalIndex = 0;
+        logger.info("Received transport data", data);
+        if (data && data.result && data.result.buses && data.result.buses.length > 0) {
+          data.result.buses.forEach((bus, index) => {
+            if (bus.linea !== null) {
+              viewContainer.createWidget(widget.IMG, {
+                x: px(30),
+                y: px(20) + px(index * (PILL_HEIGHT + 10)),
+                src: `/line_images/${bus.linea}.png`,
+              });
 
-        Array.from({ length: data.length }).forEach((_, index) => {
-          viewContainer.createWidget(widget.IMG, {
-            x: px(30),
-            y: px(20) + px(index * (PILL_HEIGHT + 10)),
-            src: `/line_images/${data.result.buses[index].linea}.png`,
+              viewContainer.createWidget(widget.TEXT, {
+                x: px(100),
+                y: px(20) + px(index * (PILL_HEIGHT + 10)),
+                w: DEVICE_WIDTH - px(130),
+                h: px(46),
+                text_size: px(36),
+                color: 0xffffff,
+                align_h: align.LEFT,
+                align_v: align.CENTER_V,
+                text: `${bus.destino}`,
+              });
+
+              viewContainer.createWidget(widget.TEXT, {
+                x: 0,
+                y: px(20) + px(index * (PILL_HEIGHT + 10)),
+                w: DEVICE_WIDTH - px(20),
+                h: px(46),
+                text_size: px(28),
+                color: (bus.minutos && (parseInt(bus.minutos) <= 5 || bus.minutos.toLowerCase() === 'next')) ? 0x66ff66 : 0xcccccc, // Green if minutes <= 5 or text is "Now", otherwise light gray
+                align_h: align.RIGHT,
+                align_v: align.TOP,
+                text: bus.minutos || bus.horaLlegada || 'N/A', // Use minutos, if not present use horaLlegada, otherwise 'N/A'
+              });
+
+              totalIndex += 1;
+            }
           });
-
-          viewContainer.createWidget(widget.TEXT, {
-            x: px(100),
-            y: px(20) + px(index * (PILL_HEIGHT + 10)),
-            w: DEVICE_WIDTH - px(130),
-            h: px(46),
-            text_size: px(36),
-            color: 0xffffff,
-            align_h: align.LEFT,
-            align_v: align.CENTER_V,
-            text: `${data.result.buses[index].destino}`,
-          });
-
+        } else {
           viewContainer.createWidget(widget.TEXT, {
             x: 0,
-            y: px(20) + px(index * (PILL_HEIGHT + 10)),
-            w: DEVICE_WIDTH - px(20),
+            y: (DEVICE_HEIGHT - px(46)) / 2, // Center vertically
+            w: DEVICE_WIDTH,
             h: px(46),
-            text_size: px(28),
-            color: (data.result.buses[index].minutos && (parseInt(data.result.buses[index].minutos) <= 5 || data.result.buses[index].minutos.toLowerCase() === 'now')) ? 0x66ff66 : 0xcccccc, // Green if minutes <= 5 or text is "Now", otherwise light gray
-            align_h: align.RIGHT,
-            align_v: align.TOP,
-            text: data.result.buses[index].minutos || data.result.buses[index].horaLlegada || 'N/A', // Use minutos, if not present use horaLlegada, otherwise 'N/A'
+            text_size: px(36),
+            color: 0xcccccc, // Light gray color
+            align_h: align.CENTER_H,
+            align_v: align.CENTER_V,
+            text: "No service",
           });
-
-          totalIndex += 1;
-        });
+        }
 
         viewContainer.createWidget(widget.BUTTON, {
           x: px(0),
-          y: px(20) + px(totalIndex * PILL_HEIGHT),
+          y: px(20) + px(totalIndex * (PILL_HEIGHT + 10)),
           w: DEVICE_WIDTH,
           h: px(60),
           text: "View on map",
@@ -207,15 +218,12 @@ Page({
           text_size: px(36),
           color: 0x262626,
           click_func: () => {
-            logger.log("Opening QR code");
-            logger.log("Latitude", data2.stopLatitude);
-            logger.log("Longitude", data2.stopLongitude);
-           push({
-             url: 'pages/qr',
-             params: {
-               latitude: data2.stopLatitude,
-               longitude: data2.stopLongitude
-             },
+            push({
+              url: 'pages/qr',
+              params: {
+                latitude: data2.stopLatitude,
+                longitude: data2.stopLongitude
+              },
             });
           },
         });
@@ -224,7 +232,7 @@ Page({
 
         viewContainer.createWidget(widget.BUTTON, {
           x: px(0),
-          y: px(20) + px(totalIndex * PILL_HEIGHT),
+          y: px(20) + px(totalIndex * (PILL_HEIGHT + 10)),
           w: DEVICE_WIDTH,
           h: px(60),
           text: "Refresh",
@@ -245,7 +253,6 @@ Page({
               align_h: align.CENTER_H,
               align_v: align.CENTER_V,
             });
-            logger.log("Updating widget");
             deleteWidget(viewContainer);
             this.getStopData();
           },

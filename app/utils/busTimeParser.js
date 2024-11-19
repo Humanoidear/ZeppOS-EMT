@@ -50,12 +50,12 @@ export function addClosestBusInfo(parsedData) {
         return { closestBus: null }; // No buses, no closest bus
     }
 
-    // Filter buses with valid `minutos`
+    // Filter buses with valid `minutos` or "Next"
     const validBuses = parsedData.buses
-        .filter((bus) => bus.minutos && /^\d+/.test(bus.minutos)) // Match minutes starting with digits
+        .filter((bus) => bus.minutos && (/^\d+/.test(bus.minutos) || bus.minutos.toLowerCase() === "next")) // Match minutes starting with digits or "Next"
         .map((bus) => ({
             ...bus,
-            minutosValue: parseInt(bus.minutos.match(/^\d+/)[0], 10), // Extract numeric value from "34 min."
+            minutosValue: bus.minutos.toLowerCase() === "next" ? -1 : parseInt(bus.minutos.match(/^\d+/)[0], 10), // Assign -1 for "Next" to prioritize it
         }));
 
     if (validBuses.length === 0) {

@@ -23,11 +23,10 @@ async function fetchTransportData(ctx, params) {
   const upperCornerLat = latitude + 0.001;
   
   const url = `https://geoportal.emtvalencia.es/opentripplanner-api-webapp/ws/metadata/stopsInExtent?lowerCornerLon=${lowerCornerLon}&lowerCornerLat=${lowerCornerLat}&upperCornerLon=${upperCornerLon}&upperCornerLat=${upperCornerLat}`;
-  console.log(url);
+  //const url = `https://geoportal.emtvalencia.es/opentripplanner-api-webapp/ws/metadata/stopsInExtent?lowerCornerLon=-0.37486835464670604&lowerCornerLat=39.46716141849309&upperCornerLon=-0.3725556951850139&upperCornerLat=39.473334039068845`;
   try {
     const res = await fetch(url, { method: 'GET' });
     const resBody = await res.json();
-    console.log(resBody);
     if (res.status === 204) {
       ctx.response({
         data: { result: "No Content" },
@@ -36,7 +35,8 @@ async function fetchTransportData(ctx, params) {
     }
 
     const stopsData = await Promise.all(resBody.stop.map(async stop => {
-      const routes = Array.isArray(stop.routes.rtI) ? await Promise.all(stop.routes.rtI.map(async route => {
+      const routes = Array.isArray(stop.routes.rtI) ? await (async () => {
+        const route = stop.routes.rtI[0]; // Take the first element
         const timeUrl = `https://geoportal.emtvalencia.es/EMT/mapfunctions/MapUtilsPetitions.php?sec=getSAE&parada=${stop.stopId}&adaptados=false&idioma=en&nocache=0.2266934924450733`;
         const timeRes = await fetch(timeUrl, {
           headers: {
@@ -49,7 +49,7 @@ async function fetchTransportData(ctx, params) {
         const buses = parseBusEstimations(timeText);
         const closestBus = addClosestBusInfo(buses);
         return closestBus;
-      })) : await (async () => {
+      })() : await (async () => {
         const timeUrl = `https://geoportal.emtvalencia.es/EMT/mapfunctions/MapUtilsPetitions.php?sec=getSAE&parada=${stop.stopId}&adaptados=false&idioma=en&nocache=0.2266934924450733`;
         const timeRes = await fetch(timeUrl, {
           headers: {
@@ -64,9 +64,8 @@ async function fetchTransportData(ctx, params) {
         return closestBus;
       })();
     
-      // Ensure routes is an array and find the closest bus for this stop
-      const closestBus = Array.isArray(routes) ? (routes.length > 1 ? routes.closestBus[0] : routes.closestBus) : routes.closestBus;
-
+      const closestBus = routes.closestBus;
+    
       // Calculate the distance from the user to the stop
       const distance = calculateDistance(latitude, longitude, stop.lat, stop.lon);
     
@@ -85,8 +84,6 @@ async function fetchTransportData(ctx, params) {
     // Sort the stops by distance
     stopsData.sort((a, b) => a.distance - b.distance);
     
-    console.log(stopsData);
-    
     let length = stopsData.length;
     ctx.response({
       data: { result: stopsData, length: length },
@@ -103,7 +100,6 @@ async function fetchTransportData(ctx, params) {
 async function fetchTransportDataStop(ctx, params) {
   const { latitude, longitude, stopId } = params;
   const url = `https://geoportal.emtvalencia.es/EMT/mapfunctions/MapUtilsPetitions.php?sec=getSAE&parada=${stopId}&adaptados=false&idioma=en&nocache=0.2266934924450733`;
-  console.log(url);
   const stopRes = await fetch(url, {
     headers: {
       'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:132.0) Gecko/20100101 Firefox/132.0'
@@ -123,7 +119,6 @@ async function fetchTransportDataStop(ctx, params) {
 
 AppSideService({
   onInit() {
-    console.log("app-side service is initialized!");
     messageBuilder.listen(() => { });
 
     messageBuilder.on("request", (ctx) => {
@@ -131,15 +126,9 @@ AppSideService({
       if (jsonRpc.method === "GET_EMT") {
         return fetchTransportData(ctx, jsonRpc.params);
       } else if (jsonRpc.method === "GET_EMT_STOP") {
-        console.log("GET_EMT_STOP");
         return fetchTransportDataStop(ctx, jsonRpc.params);
       }
     });
   },
-
-  onRun() {
-    console.log("app-side service is running!");
-  },
-
   onDestroy() { },
 });

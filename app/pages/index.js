@@ -5,7 +5,6 @@ import { push } from '@zos/router';
 import { updateStatusBarTitle } from '@zos/ui';
 import { DEVICE_WIDTH, DEVICE_HEIGHT } from "../utils/config/device";
 
-
 const geolocation = new Geolocation();
 
 const logger = Logger.getLogger("fetch_api");
@@ -42,8 +41,6 @@ Page({
     geolocation.start();
     const latitude = geolocation.getLatitude();
     const longitude = geolocation.getLongitude() * -1;
-    logger.log("Latitude", latitude);
-    logger.log("Longitude", longitude);
 
     messageBuilder
       .request({
@@ -157,53 +154,66 @@ Page({
             press_color: 0x1a1a1a,
             radius: px(30),
             click_func: () => {
-              logger.log("Opening stop", stop.stopId);
               push({
                 url: '/pages/stop',
-                params: { 
+                params: {
                   stopId: stop.stopId,
                   stopLatitude: stop.lat,
                   stopLongitude: stop.lon,
                   stopName: stop.name,
                   stopUbica: stop.ubica,
                   stopRoutes: stop.routes,
-                 }
+                }
               });
             }
           });
 
-          viewContainer.createWidget(widget.TEXT, {
-            x: px(30),
-            y: px(20) + px(index * (PILL_HEIGHT + 10) + MESSAGE_HEIGHT),
-            w: DEVICE_WIDTH - px(100),
-            h: px(46),
-            text_size: px(28),
-            color: (stop.closestBus.minutos && (parseInt(stop.closestBus.minutos) <= 5 || stop.closestBus.minutos.toLowerCase() === 'now')) ? 0x66ff66 : 0xcccccc, // Green if minutes <= 5 or text is "Now", otherwise light gray
-            align_h: align.RIGHT,
-            align_v: align.TOP,
-            text: stop.closestBus.minutos || stop.closestBus.horaLlegada || 'N/A', // Use minutos, if not present use horaLlegada, otherwise 'N/A'
-          });
+          if (stop.closestBus) {
+            viewContainer.createWidget(widget.TEXT, {
+              x: px(30),
+              y: px(20) + px(index * (PILL_HEIGHT + 10) + MESSAGE_HEIGHT),
+              w: DEVICE_WIDTH - px(100),
+              h: px(46),
+              text_size: px(28),
+              color: (stop.closestBus.minutos && (parseInt(stop.closestBus.minutos) <= 5 || stop.closestBus.minutos.toLowerCase() === 'next')) ? 0x66ff66 : 0xcccccc, // Green if minutes <= 5 or text is "Now", otherwise light gray
+              align_h: align.RIGHT,
+              align_v: align.TOP,
+              text: stop.closestBus.minutos || stop.closestBus.horaLlegada || 'N/A', // Use minutos, if not present use horaLlegada, otherwise 'N/A'
+            });
 
-          viewContainer.createWidget(widget.FILL_RECT, {
-            x: DEVICE_WIDTH - px(60),
-            y: px(30) + px(index * (PILL_HEIGHT + 10) + MESSAGE_HEIGHT),
-            w: px(30),
-            h: px(30),
-            color: 0xff0000,
-            radius: px(30),
-          });
+            viewContainer.createWidget(widget.FILL_RECT, {
+              x: DEVICE_WIDTH - px(60),
+              y: px(30) + px(index * (PILL_HEIGHT + 10) + MESSAGE_HEIGHT),
+              w: px(30),
+              h: px(30),
+              color: 0xff0000,
+              radius: px(30),
+            });
 
-          viewContainer.createWidget(widget.TEXT, {
-            x: DEVICE_WIDTH - px(60),
-            y: px(32) + px(index * (PILL_HEIGHT + 10) + MESSAGE_HEIGHT),
-            w: px(30),
-            h: px(30),
-            text_size: px(18),
-            color: 0xffffff,
-            align_h: align.CENTER_H,
-            align_v: align.TOP,
-            text: stop.closestBus.linea,
-          });
+            viewContainer.createWidget(widget.TEXT, {
+              x: DEVICE_WIDTH - px(60),
+              y: px(32) + px(index * (PILL_HEIGHT + 10) + MESSAGE_HEIGHT),
+              w: px(30),
+              h: px(30),
+              text_size: px(18),
+              color: 0xffffff,
+              align_h: align.CENTER_H,
+              align_v: align.TOP,
+              text: stop.closestBus.linea,
+            });
+          } else {
+            viewContainer.createWidget(widget.TEXT, {
+              x: px(30),
+              y: px(20) + px(index * (PILL_HEIGHT + 10) + MESSAGE_HEIGHT),
+              w: DEVICE_WIDTH - px(60),
+              h: px(46),
+              text_size: px(28),
+              color: 0xcccccc, // Light gray color
+              align_h: align.RIGHT,
+              align_v: align.TOP,
+              text: "No service",
+            });
+          }
 
           Array.from({
             length: Array.isArray(stop.routes.rtI) ? stop.routes.rtI.length : 1,
@@ -270,7 +280,6 @@ Page({
               align_h: align.CENTER_H,
               align_v: align.CENTER_V,
             });
-            logger.log("Updating widget");
             deleteWidget(viewContainer);
             this.getStops();
           },
