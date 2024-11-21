@@ -23,7 +23,6 @@ async function fetchTransportData(ctx, params) {
   const upperCornerLat = latitude + 0.001;
   
   const url = `https://geoportal.emtvalencia.es/opentripplanner-api-webapp/ws/metadata/stopsInExtent?lowerCornerLon=${lowerCornerLon}&lowerCornerLat=${lowerCornerLat}&upperCornerLon=${upperCornerLon}&upperCornerLat=${upperCornerLat}`;
-  //const url = `https://geoportal.emtvalencia.es/opentripplanner-api-webapp/ws/metadata/stopsInExtent?lowerCornerLon=-0.37486835464670604&lowerCornerLat=39.46716141849309&upperCornerLon=-0.3725556951850139&upperCornerLat=39.473334039068845`;
   try {
     const res = await fetch(url, { method: 'GET' });
     const resBody = await res.json();

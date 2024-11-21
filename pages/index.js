@@ -1,4 +1,4 @@
-import { createWidget, widget, align, text_style, redraw, deleteWidget } from "@zos/ui";
+import { createWidget, widget, align, text_style, redraw, deleteWidget, event, prop } from "@zos/ui";
 import { log as Logger, px } from "@zos/utils";
 import { Geolocation } from "@zos/sensor";
 import { push } from '@zos/router';
@@ -145,31 +145,17 @@ Page({
         Array.from({ length: data.length }).forEach((_, index) => {
           const stop = data.result[index];
 
-          viewContainer.createWidget(widget.BUTTON, {
+          const pill = viewContainer.createWidget(widget.FILL_RECT, {
             x: 0,
             y: px(index * (PILL_HEIGHT + 10) + MESSAGE_HEIGHT),
             w: DEVICE_WIDTH,
             h: px(PILL_HEIGHT),
-            normal_color: 0x181818,
-            press_color: 0x1a1a1a,
-            radius: px(30),
-            click_func: () => {
-              push({
-                url: '/pages/stop',
-                params: {
-                  stopId: stop.stopId,
-                  stopLatitude: stop.lat,
-                  stopLongitude: stop.lon,
-                  stopName: stop.name,
-                  stopUbica: stop.ubica,
-                  stopRoutes: stop.routes,
-                }
-              });
-            }
+            color: 0x181818,
+            radius: px(30)
           });
 
           if (stop.closestBus) {
-            viewContainer.createWidget(widget.TEXT, {
+            const time = viewContainer.createWidget(widget.TEXT, {
               x: px(30),
               y: px(20) + px(index * (PILL_HEIGHT + 10) + MESSAGE_HEIGHT),
               w: DEVICE_WIDTH - px(100),
@@ -181,7 +167,7 @@ Page({
               text: stop.closestBus.minutos || stop.closestBus.horaLlegada || 'N/A', // Use minutos, if not present use horaLlegada, otherwise 'N/A'
             });
 
-            viewContainer.createWidget(widget.FILL_RECT, {
+            const timebg = viewContainer.createWidget(widget.FILL_RECT, {
               x: DEVICE_WIDTH - px(60),
               y: px(30) + px(index * (PILL_HEIGHT + 10) + MESSAGE_HEIGHT),
               w: px(30),
@@ -190,7 +176,7 @@ Page({
               radius: px(30),
             });
 
-            viewContainer.createWidget(widget.TEXT, {
+            const timenum = viewContainer.createWidget(widget.TEXT, {
               x: DEVICE_WIDTH - px(60),
               y: px(32) + px(index * (PILL_HEIGHT + 10) + MESSAGE_HEIGHT),
               w: px(30),
@@ -201,8 +187,57 @@ Page({
               align_v: align.TOP,
               text: stop.closestBus.linea,
             });
+
+            time.addEventListener(event.CLICK_UP, () => {
+              pill.setProperty(prop.DATASET, {
+                color: 0x1a1a1a,
+              })
+              push({
+                url: '/pages/stop',
+                params: {
+                  stopId: stop.stopId,
+                  stopLatitude: stop.lat,
+                  stopLongitude: stop.lon,
+                  stopName: stop.name,
+                  stopUbica: stop.ubica,
+                  stopRoutes: stop.routes,
+                }
+              });
+            });
+            timebg.addEventListener(event.CLICK_UP, () => {
+              pill.setProperty(prop.DATASET, {
+                color: 0x1a1a1a,
+              })
+              push({
+                url: '/pages/stop',
+                params: {
+                  stopId: stop.stopId,
+                  stopLatitude: stop.lat,
+                  stopLongitude: stop.lon,
+                  stopName: stop.name,
+                  stopUbica: stop.ubica,
+                  stopRoutes: stop.routes,
+                }
+              });
+            });
+            timenum.addEventListener(event.CLICK_UP, () => {
+              pill.setProperty(prop.DATASET, {
+                color: 0x1a1a1a,
+              })
+              push({
+                url: '/pages/stop',
+                params: {
+                  stopId: stop.stopId,
+                  stopLatitude: stop.lat,
+                  stopLongitude: stop.lon,
+                  stopName: stop.name,
+                  stopUbica: stop.ubica,
+                  stopRoutes: stop.routes,
+                }
+              });
+            });
           } else {
-            viewContainer.createWidget(widget.TEXT, {
+            const time = viewContainer.createWidget(widget.TEXT, {
               x: px(30),
               y: px(20) + px(index * (PILL_HEIGHT + 10) + MESSAGE_HEIGHT),
               w: DEVICE_WIDTH - px(60),
@@ -213,6 +248,23 @@ Page({
               align_v: align.TOP,
               text: "No service",
             });
+
+            time.addEventListener(event.CLICK_UP, () => {
+              pill.setProperty(prop.DATASET, {
+                color: 0x1a1a1a,
+              })
+              push({
+                url: '/pages/stop',
+                params: {
+                  stopId: stop.stopId,
+                  stopLatitude: stop.lat,
+                  stopLongitude: stop.lon,
+                  stopName: stop.name,
+                  stopUbica: stop.ubica,
+                  stopRoutes: stop.routes,
+                }
+              });
+            });
           }
 
           Array.from({
@@ -222,14 +274,31 @@ Page({
               ? stop.routes.rtI[index2]
               : stop.routes.rtI;
             console.log(index, index2, route.id_linea);
-            viewContainer.createWidget(widget.IMG, {
+            const lineimg = viewContainer.createWidget(widget.IMG, {
               x: px(30) + px(index2 * 50),
               y: px(20) + px(index * (PILL_HEIGHT + 10) + MESSAGE_HEIGHT),
               src: `/line_images/${route.id_linea}.png`,
             });
+
+            lineimg.addEventListener(event.CLICK_UP, () => {
+              pill.setProperty(prop.DATASET, {
+                color: 0x1a1a1a,
+              })
+              push({
+                url: '/pages/stop',
+                params: {
+                  stopId: stop.stopId,
+                  stopLatitude: stop.lat,
+                  stopLongitude: stop.lon,
+                  stopName: stop.name,
+                  stopUbica: stop.ubica,
+                  stopRoutes: stop.routes,
+                }
+              });
+            });
           });
 
-          viewContainer.createWidget(widget.TEXT, {
+          const name = viewContainer.createWidget(widget.TEXT, {
             x: px(30),
             y: px(70) + px(index * (PILL_HEIGHT + 10) + MESSAGE_HEIGHT),
             w: DEVICE_WIDTH - px(60),
@@ -241,7 +310,7 @@ Page({
             text: `${stop.stopId} - ${stop.name}`,
           });
 
-          viewContainer.createWidget(widget.TEXT, {
+          const address = viewContainer.createWidget(widget.TEXT, {
             x: px(30),
             y: px(120) + px(index * (PILL_HEIGHT + 10) + MESSAGE_HEIGHT),
             w: DEVICE_WIDTH - px(60),
@@ -254,6 +323,54 @@ Page({
             text: `${stop.ubica}`,
           });
 
+          pill.addEventListener(event.CLICK_UP, () => {
+            pill.setProperty(prop.DATASET, {
+              color: 0x1a1a1a,
+            })
+            push({
+              url: '/pages/stop',
+              params: {
+                stopId: stop.stopId,
+                stopLatitude: stop.lat,
+                stopLongitude: stop.lon,
+                stopName: stop.name,
+                stopUbica: stop.ubica,
+                stopRoutes: stop.routes,
+              }
+            });
+          });
+          name.addEventListener(event.CLICK_UP, () => {
+            pill.setProperty(prop.DATASET, {
+              color: 0x1a1a1a,
+            })
+            push({
+              url: '/pages/stop',
+              params: {
+                stopId: stop.stopId,
+                stopLatitude: stop.lat,
+                stopLongitude: stop.lon,
+                stopName: stop.name,
+                stopUbica: stop.ubica,
+                stopRoutes: stop.routes,
+              }
+            });
+          });
+          address.addEventListener(event.CLICK_UP, () => {
+            pill.setProperty(prop.DATASET, {
+              color: 0x1a1a1a,
+            })
+            push({
+              url: '/pages/stop',
+              params: {
+                stopId: stop.stopId,
+                stopLatitude: stop.lat,
+                stopLongitude: stop.lon,
+                stopName: stop.name,
+                stopUbica: stop.ubica,
+                stopRoutes: stop.routes,
+              }
+            });
+          });
           totalIndex += 1;
         });
 
